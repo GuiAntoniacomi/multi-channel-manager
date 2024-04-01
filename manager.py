@@ -49,6 +49,7 @@ def reordenar_colunas(tabela, colunas_ordenadas):
     return tabela.reindex(columns=colunas_ordenadas)
 
 def salvar_tabela(tabela, nome_arquivo, output_directory):
+    output_directory='C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
     output_path = os.path.join(output_directory, nome_arquivo)
     tabela.to_excel(output_path, index=False)
 
@@ -69,6 +70,7 @@ def gerar_tabela_produtos_sem_cadastro(diretorio_bagy, marcas_proibidas, nome_ar
     print(f"Uma nova tabela com o status de cadastro dos produtos foi criada: '{nome_arquivo}'")
 
 def main():
+    output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
     print('Você deseja criar uma planilha para ver os produtos sem cadastro na Bagy ou nos Marketplaces?\n1 - Bagy\n2 - Marketplaces')
     canal_escolhido = int(input('Digite o número correspondente a sua escolha: '))
 
@@ -84,7 +86,7 @@ def main():
         tabela_final = processar_tabela_site(tabela_bling, tabela_bagy)
 
         # Salvar e imprimir mensagem
-        salvar_tabela(tabela_final, nome_arquivo, output_directory='C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\')
+        salvar_tabela(tabela_final, nome_arquivo, output_directory)
 
     elif canal_escolhido == 2:
         print('Para qual marketplace você deseja gerar a planilha?\n1 - Dafiti\n2 - Mercado Livre\n3 - Zattini - Netshoes')
@@ -110,11 +112,12 @@ def main():
             tabela_final = processar_tabela_marketplace(tabela_bagy, marcas_proibidas, tabela_marketplace)
 
             # Salvar e imprimir mensagem
-            salvar_tabela(tabela_final, nome_arquivo)
+            salvar_tabela(tabela_final, nome_arquivo, output_directory)
         else:
             print('Você deve selecionar uma opção válida!')
     else:
         print('Você deve selecionar uma opção válida!')
+    print('Sua tabela foi gerada com sucesso!')
 
 def processar_tabela_site(tabela_bling, tabela_bagy):
     tabela_final = tabela_bling.copy()
