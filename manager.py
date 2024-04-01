@@ -78,81 +78,107 @@ elif canal_escolhido == 2:
         nome_arquivo = 'produtos_sem_cadastro_dafiti.xlsx'
         tabela_bagy = pd.read_excel(diretorio_bagy)
         tabela_dafiti = pd.read_excel(diretorio_dafiti)
-        nome_arquivo = 'Produtos_sem_cadastro_dafiti.xlsx'
-        # Filtragem da tabela Bagy
+
+        # Filtrar Tabela
         tabela_bagy_filtrada = tabela_bagy[~tabela_bagy['Marca'].isin(marcas_proibidas)]
-        # Criação de uma cópia da tabela Bagy para adicionar o status de cadastro
+
+        # Crie uma cópia da tabela do site para adicionar o status de cadastro
         tabela_final = tabela_bagy_filtrada.copy()
-        # Adição da coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
+
+        # Adicionando a coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
         tabela_final['Status de cadastro'] = 'Sem Cadastro'
-        # Atualização do status para 'cadastrado' onde os códigos estão presentes no marketplace
+
+        # Atualize o status para 'cadastrado' onde os códigos estão presentes no marketplace
         tabela_final.loc[tabela_final['Código'].isin(tabela_dafiti['Código']), 'Status de cadastro'] = 'Cadastrado'
+
         # Merge com a tabela do marketplace para preço e estoque
-        tabela_final = tabela_final.merge(tabela_dafiti[['Código', "Preço de", 'Preço por']], on='Código', how='left', suffixes=("", '_DFT'))
-        # Cálculo da rentabilidade
-        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0) * 10 - 0.01)
+        tabela_final = tabela_final.merge(tabela_dafiti[['Código', 'Preço de', 'Preço por']], on='Código', how='left')
+
+        # Adicionar coluna de Preço Final
+        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0)*10 - 0.01)
+
         # Remoção de colunas desnecessárias
         tabela_final.drop(columns=['Código', 'Marca'], inplace=True)
+
         # Agrupamento por 'SKU Pai', soma do estoque e manutenção das outras informações
         agg_dict = {'Estoque': 'sum',  # Soma do estoque
-                    'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
-                    'Preço de': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço por': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
-                    'Preço de_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Preço por_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
-                    'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
+                'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
+                'Preço De': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Por': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
+                'Preço de': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Preço por': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
+                'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
         tabela_final = tabela_final.groupby('SKU Pai').agg(agg_dict)
+
         # Reorganização das colunas (opcional, se a ordem desejada for diferente)
-        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço de', 'Preço por', 'Preço Final', 'Preço de_MELI', 'Preço por_MELI', 'Status de cadastro']
+        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço De', 'Preço Por', 'Preço Final', 'Preço de', 'Preço por', 'Status de cadastro']
         tabela_final = tabela_final.reindex(columns=colunas_ordenadas)
-        # Salvamento em Excel
+
+        # Salvar a nova tabela em um arquivo Excel
+        # Diretório de saída pré-definido
         output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+        # Construa o caminho completo do arquivo de saída
         output_path = os.path.join(output_directory, nome_arquivo)
+        # Salvar a nova tabela em um arquivo Excel no diretório escolhido
         tabela_final.to_excel(output_path, index=False)
+
+        # Mensagem personalizada de impressão
         print(f"Uma nova tabela com o status de cadastro dos produtos foi criada: '{nome_arquivo}'")
     elif mktplc_selecionado == 2:
         print('Perfeito, vamos gerar a tabela de produtos para cadastrar do Mercado Livre...')
         marcas_proibidas = marcas_proibidas_meli
-        nome_arquivo = 'produtos_sem_cadastro_meli.xlsx'
+        nome_arquivo = 'Produtos_sem_cadastro_meli.xlsx'
         tabela_bagy = pd.read_excel(diretorio_bagy)
         tabela_meli = pd.read_excel(diretorio_meli)
-        nome_arquivo = 'Produtos_sem_cadastro_meli.xlsx'
-        # Filtragem da tabela Bagy
+
+        # Filtrar Tabela
         tabela_bagy_filtrada = tabela_bagy[~tabela_bagy['Marca'].isin(marcas_proibidas)]
-        # Criação de uma cópia da tabela Bagy para adicionar o status de cadastro
+
+        # Crie uma cópia da tabela do site para adicionar o status de cadastro
         tabela_final = tabela_bagy_filtrada.copy()
-        # Adição da coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
+
+        # Adicionando a coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
         tabela_final['Status de cadastro'] = 'Sem Cadastro'
-        # Atualização do status para 'cadastrado' onde os códigos estão presentes no marketplace
+
+        # Atualize o status para 'cadastrado' onde os códigos estão presentes no marketplace
         tabela_final.loc[tabela_final['Código'].isin(tabela_meli['Código']), 'Status de cadastro'] = 'Cadastrado'
+
         # Merge com a tabela do marketplace para preço e estoque
-        tabela_final = tabela_final.merge(tabela_meli[['Código', "Preço de", 'Preço por']], on='Código', how='left', suffixes=("", '_MELI'))
-        # Cálculo da rentabilidade
-        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0) * 10 - 0.01)
-        rentabilidade = (tabela_final['Preço Final'] - tabela_final['Preço por_MELI']) / tabela_final['Preço por_MELI'] * 100
-        tabela_final['Rentabilidade'] = rentabilidade.round(2)
+        tabela_final = tabela_final.merge(tabela_meli[['Código', 'Preço de', 'Preço por']], on='Código', how='left')
+
+        # Adicionar coluna de Preço Final
+        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0)*10 - 0.01)
+
         # Remoção de colunas desnecessárias
         tabela_final.drop(columns=['Código', 'Marca'], inplace=True)
+
         # Agrupamento por 'SKU Pai', soma do estoque e manutenção das outras informações
         agg_dict = {'Estoque': 'sum',  # Soma do estoque
-                    'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
-                    'Preço de': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço por': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
-                    'Preço de_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Preço por_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
-                    'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
+                'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
+                'Preço De': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Por': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
+                'Preço de': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Preço por': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
+                'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
         tabela_final = tabela_final.groupby('SKU Pai').agg(agg_dict)
+
         # Reorganização das colunas (opcional, se a ordem desejada for diferente)
-        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço de', 'Preço por', 'Preço Final', 'Preço de_MELI', 'Preço por_MELI', 'Status de cadastro']
+        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço De', 'Preço Por', 'Preço Final', 'Preço de', 'Preço por', 'Status de cadastro']
         tabela_final = tabela_final.reindex(columns=colunas_ordenadas)
-        # Salvamento em Excel
+
+        # Salvar a nova tabela em um arquivo Excel
+        # Diretório de saída pré-definido
         output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+        # Construa o caminho completo do arquivo de saída
         output_path = os.path.join(output_directory, nome_arquivo)
+        # Salvar a nova tabela em um arquivo Excel no diretório escolhido
         tabela_final.to_excel(output_path, index=False)
+
+        # Mensagem personalizada de impressão
         print(f"Uma nova tabela com o status de cadastro dos produtos foi criada: '{nome_arquivo}'")
     elif mktplc_selecionado == 3:
         print('Perfeito, vamos gerar a tabela de produtos para cadastrar da Zattini...')
@@ -160,39 +186,53 @@ elif canal_escolhido == 2:
         nome_arquivo = 'produtos_sem_cadastro_zattini.xlsx'
         tabela_bagy = pd.read_excel(diretorio_bagy)
         tabela_zattini = pd.read_excel(direftorio_zattini)
-        nome_arquivo = 'Produtos_sem_cadastro_zattini.xlsx'
-        # Filtragem da tabela Bagy
+
+        # Filtrar Tabela
         tabela_bagy_filtrada = tabela_bagy[~tabela_bagy['Marca'].isin(marcas_proibidas)]
-        # Criação de uma cópia da tabela Bagy para adicionar o status de cadastro
+
+        # Crie uma cópia da tabela do site para adicionar o status de cadastro
         tabela_final = tabela_bagy_filtrada.copy()
-        # Adição da coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
+
+        # Adicionando a coluna 'Status de cadastro' com o valor padrão 'Sem Cadastro'
         tabela_final['Status de cadastro'] = 'Sem Cadastro'
-        # Atualização do status para 'cadastrado' onde os códigos estão presentes no marketplace
+
+        # Atualize o status para 'cadastrado' onde os códigos estão presentes no marketplace
         tabela_final.loc[tabela_final['Código'].isin(tabela_zattini['Código']), 'Status de cadastro'] = 'Cadastrado'
+
         # Merge com a tabela do marketplace para preço e estoque
-        tabela_final = tabela_final.merge(tabela_zattini[['Código', "Preço de", 'Preço por']], on='Código', how='left', suffixes=("", '_'))
-        # Cálculo da rentabilidade
-        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0) * 10 - 0.01)
+        tabela_final = tabela_final.merge(tabela_zattini[['Código', 'Preço de', 'Preço por']], on='Código', how='left')
+
+        # Adicionar coluna de Preço Final
+        tabela_final['Preço Final'] = tabela_final['Preço por'].apply(lambda x: round((x/10), 0)*10 - 0.01)
+
         # Remoção de colunas desnecessárias
         tabela_final.drop(columns=['Código', 'Marca'], inplace=True)
+
         # Agrupamento por 'SKU Pai', soma do estoque e manutenção das outras informações
         agg_dict = {'Estoque': 'sum',  # Soma do estoque
-                    'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
-                    'Preço de': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço por': 'first',  # Manter a primeira ocorrência do preço
-                    'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
-                    'Preço de_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Preço por_MELI': 'first',  # Manter a primeira ocorrência do preço do marketplace
-                    'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
-                    'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
+                'Nome': 'first',  # Manter a primeira ocorrência do nome do produto
+                'Preço De': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Por': 'first',  # Manter a primeira ocorrência do preço
+                'Preço Final': 'first',  # Manter a primeira ocorrência do preço final
+                'Preço de': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Preço por': 'first',  # Manter a primeira ocorrência do preço do marketplace
+                'Status de cadastro': 'first',  # Manter a primeira ocorrência do status
+                'SKU Pai': 'first'}  # Manter a primeira ocorrência da rentabilidade
         tabela_final = tabela_final.groupby('SKU Pai').agg(agg_dict)
+
         # Reorganização das colunas (opcional, se a ordem desejada for diferente)
-        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço de', 'Preço por', 'Preço Final', 'Preço de_MELI', 'Preço por_MELI', 'Status de cadastro']
+        colunas_ordenadas = ['SKU Pai', 'Nome', 'Estoque', 'Preço De', 'Preço Por', 'Preço Final', 'Preço de', 'Preço por', 'Status de cadastro']
         tabela_final = tabela_final.reindex(columns=colunas_ordenadas)
-        # Salvamento em Excel
+
+        # Salvar a nova tabela em um arquivo Excel
+        # Diretório de saída pré-definido
         output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+        # Construa o caminho completo do arquivo de saída
         output_path = os.path.join(output_directory, nome_arquivo)
+        # Salvar a nova tabela em um arquivo Excel no diretório escolhido
         tabela_final.to_excel(output_path, index=False)
+
+        # Mensagem personalizada de impressão
         print(f"Uma nova tabela com o status de cadastro dos produtos foi criada: '{nome_arquivo}'")
     else:
         print('Você deve selecionar uma opção válida!')
