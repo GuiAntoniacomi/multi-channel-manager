@@ -2,11 +2,11 @@ import pandas as pd
 import os
 
 # Diretórios
-diretorio_bling = "C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\planilhas\\plan_bling.xlsx"
-diretorio_bagy = "C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\planilhas\\plan_bagy.xlsx"
-diretorio_dafiti = "C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\planilhas\\plan_dafiti.xlsx"
-diretorio_meli = "C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\planilhas\\plan_meli.xlsx"
-direftorio_zattini = "C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\planilhas\\plan_zattini.xlsx"
+diretorio_bling = "src\\planilhas\\plan_bling.xlsx"
+diretorio_bagy = "src\\planilhas\\plan_bagy.xlsx"
+diretorio_dafiti = "src\\planilhas\\plan_dafiti.xlsx"
+diretorio_meli = "src\\planilhas\\plan_meli.xlsx"
+direftorio_zattini = "src\\planilhas\\plan_zattini.xlsx"
 
 # Marcas Proibidas
 marcas_proibidas_bagy = []
@@ -49,7 +49,7 @@ def reordenar_colunas(tabela, colunas_ordenadas):
     return tabela.reindex(columns=colunas_ordenadas)
 
 def salvar_tabela(tabela, nome_arquivo, output_directory):
-    output_directory='C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+    output_directory='src\\criadas'
     output_path = os.path.join(output_directory, nome_arquivo)
     tabela.to_excel(output_path, index=False)
 
@@ -64,13 +64,13 @@ def gerar_tabela_produtos_sem_cadastro(diretorio_bagy, marcas_proibidas, nome_ar
     tabela_final['Status de cadastro'] = 'Sem Cadastro'
 
     # Salvar a nova tabela em um arquivo Excel
-    output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+    output_directory = 'src\\criadas'
     salvar_tabela(tabela_final, nome_arquivo, output_directory)
     # Mensagem personalizada de impressão
     print(f"Uma nova tabela com o status de cadastro dos produtos foi criada: '{nome_arquivo}'")
 
 def main():
-    output_directory = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\SecretShop\\src\\criadas\\'
+    output_directory = 'src\\criadas'
     print('Você deseja criar uma planilha para ver os produtos sem cadastro na Bagy ou nos Marketplaces?\n1 - Bagy\n2 - Marketplaces')
     canal_escolhido = int(input('Digite o número correspondente a sua escolha: '))
 
