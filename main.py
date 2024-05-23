@@ -83,7 +83,7 @@ def base_zattini():
     
     return zattini_df
 
-def exportar_para_dafiti(bagy, tabela_marketplace):
+def exportar_para_dafiti(bagy, marketplace):
     """
     Filtra e processa dados de produtos para exportação para a Dafiti.
 
@@ -111,8 +111,8 @@ def exportar_para_dafiti(bagy, tabela_marketplace):
     marcas_proibidas_dafiti = ['Abercrombie', 'Adidas', 'Aeropostale', 'Colcci', 'Crocs', 'Diesel', 'Disky', 'Guess', 'Hollister', 'Individual', 'Lacoste', 'Levis', 'New Era', 'Nike', 'Osklen', 'Polo Ralph Lauren', 'Replay', 'Victory Eagle']
     df_exportar_dafiti = bagy[~bagy['Marca'].isin(marcas_proibidas_dafiti)]
     df_exportar_dafiti['Status Cadastro'] = 'Sem Cadastro'
-    df_exportar_dafiti.loc[df_exportar_dafiti['Código'].isin(tabela_marketplace['Código']), 'Status Cadastro'] = 'Cadastrado'
-    df_exportar_dafiti = df_exportar_dafiti.merge(tabela_marketplace, on='Código', how='left')
+    df_exportar_dafiti.loc[df_exportar_dafiti['Código'].isin(marketplace['Código']), 'Status Cadastro'] = 'Cadastrado'
+    df_exportar_dafiti = df_exportar_dafiti.merge(marketplace, on='Código', how='left')
     df_exportar_dafiti = df_exportar_dafiti.drop(['Nome_y', 'Estoque_y', 'Código'], axis=1)
     df_exportar_dafiti = df_exportar_dafiti.rename(columns={'Nome_x': 'Nome', 'Estoque_x': 'Estoque','Preço De_y': 'Preço De Dft', 'Preço Por_y': 'Preço Por Dft', 'Preço De_x': 'Preço De Bagy', 'Preço Por_x': 'Preço Por Bagy' })
     df_dafiti_final = df_exportar_dafiti.groupby('SKU Pai').agg({
