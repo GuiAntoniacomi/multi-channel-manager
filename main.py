@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import os
 
 def base_bagy():
     """
@@ -65,6 +66,33 @@ def base_dafiti():
     dafiti_df = dafiti_df.dropna(subset=['Código'])
     return dafiti_df
 
+def base_meli():
+    arquivo_meli = input('Digite o caminho do arquivo do Mercado Livre: ').strip('\'"')
+    df_meli = pd.read_excel(arquivo_meli, sheet_name='Anúncios')
+    df_meli = df_meli.drop([0, 1])
+    df_meli.reset_index(drop=True, inplace=True)
+    df_meli = df_meli[['ITEM_ID', 'SKU', 'PRICE']]
+    
+    # Preenchendo valores NaN com 0 antes de converter os tipos
+    df_meli['SKU'] = df_meli['SKU'].fillna(0)
+    df_meli['PRICE'] = df_meli['PRICE'].fillna(0)
+
+    # Convertendo os tipos de dados
+    df_meli['SKU'] = df_meli['SKU'].astype(int)
+    df_meli['PRICE'] = df_meli['PRICE'].astype(float)
+    
+    #Agrupando os dados
+    df_meli = df_meli.groupby('ITEM_ID').agg({
+        'SKU': 'last',
+        'PRICE': 'first'
+    }).reset_index()
+    
+    # Ajustando o dataframe final
+    df_meli = df_meli.drop(columns=['ITEM_ID'])
+    df_meli = df_meli.rename(columns={'SKU': 'Código', 'PRICE': 'Preço Por Meli' })
+    
+    return df_meli
+
 def base_zattini():
     arquivo_zattini = input('Digite o caminho do seu arquivo da zattini: ').strip('\'"')
     zattini_excel = pd.read_excel(arquivo_zattini)
@@ -129,6 +157,26 @@ def exportar_para_dafiti(bagy, marketplace):
     df_dafiti_final = df_dafiti_final.dropna(subset=['Marca'])
     return df_dafiti_final
 
+def exportar_meli(bagy, marketplace):
+    marcas_proibidas_meli = ['Adidas', 'Crocs', 'Nike', 'Lacoste']
+    df_exportar_meli = bagy[~bagy['Marca'].isin(marcas_proibidas_meli)]
+    df_exportar_meli.loc[:, 'Status Cadastro'] = 'Cadastrado'
+    df_exportar_meli = df_exportar_meli.merge(marketplace, on='Código', how='left')
+    df_exportar_meli = df_exportar_meli.drop(['Marca'], axis=1)
+    df_exportar_meli = df_exportar_meli.groupby('SKU Pai').agg({
+        'Nome': 'first',
+        'Estoque': 'sum',
+        'Preço De': 'first',
+        'Preço Por': 'first',
+        'Status Cadastro': 'first',
+        'Preço Por Meli': 'max'
+    }).reset_index()
+    df_exportar_meli = df_exportar_meli.sort_values(by='Estoque', ascending=False)
+    df_exportar_meli.loc[df_exportar_meli['Preço Por Meli'].isna(), 'Status Cadastro'] = 'Sem Cadastro'
+    df_exportar_meli.drop([6362, 5007], inplace=True)
+   
+    return df_exportar_meli
+
 def exportar_zattini(bagy, marketplace):
     """
     Exporta dados de produtos para a Zattini, filtrando marcas proibidas e ajustando status de cadastro.
@@ -171,12 +219,45 @@ def exportar_zattini(bagy, marketplace):
     df_exportar_zattini.drop([4604, 3555], inplace=True) #removendo sacola plastica e embalagem de presente
     return df_exportar_zattini
 
+def salvar_arquivo(tabela, nome_arquivo):
+    local = input(f'Onde deseja salvar o arquivo {nome_arquivo}? ').strip('\'"')
+    local = os.path.abspath(local)  # Converte para um caminho absoluto, se necessário
+    if not os.path.exists(local):
+        os.makedirs(local)  # Cria o diretório, se não existir
+    caminho_completo = os.path.join(local, nome_arquivo)
+    tabela.to_excel(caminho_completo, index=False)
+    print(f"Arquivo salvo em {caminho_completo}")
 
-bagy = base_bagy()
-dafiti = base_dafiti()
-zattini = base_zattini()
-meli = pd.read_excel(r'src\planilhas\plan_meli.xlsx')
+def salvar_todas_as_tabelas(bagy, opcoes):
+    for opcao, (nome, func_base, func_exportar, nome_arquivo) in opcoes.items():
+        base = func_base()
+        tabela = func_exportar(bagy, base)
+        salvar_arquivo(tabela, nome_arquivo)
 
+def main():
+    bagy = base_bagy()
+    opcoes = {
+        '1': ('Dafiti', base_dafiti, exportar_para_dafiti, 'tabela_dafiti.xlsx'),
+        '2': ('Mercado Livre', base_meli, exportar_meli, 'tabela_meli.xlsx'),
+        '3': ('Zattini/Netshoes', base_zattini, exportar_zattini, 'tabela_zattini.xlsx'),
+        '4': ('Todos', None, None, None)  # Placeholder para indicar a opção '4'
+    }
+    
+    while True:
+        opcao = input('De qual marketplace deseja gerar tabela de exportação?\n1. Dafiti\n2. Mercado Livre\n3. Zattini/Netshoes\n4. Todos\n')
+        opcao = opcao.strip()
+        
+        if opcao in opcoes and opcao != '4':
+            nome, func_base, func_exportar, nome_arquivo = opcoes[opcao]
+            base = func_base()
+            tabela = func_exportar(bagy, base)
+            salvar_arquivo(tabela, nome_arquivo)
+            break
+        elif opcao == '4':
+            salvar_todas_as_tabelas(bagy, {k: v for k, v in opcoes.items() if k != '4'})
+            break
+        else:
+            print("Opção inválida. Por favor, escolha uma das opções listadas.")
 
-
-print(exportar_para_dafiti(bagy, dafiti))
+if __name__ == '__main__':
+    main()
