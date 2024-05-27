@@ -1,6 +1,10 @@
 import pandas as pd
+import numpy as np
 import re
 import os
+from tkinter import *
+import tkinter.filedialog
+from tkinter import messagebox
 
 def base_bagy():
     """
@@ -21,7 +25,11 @@ def base_bagy():
             - 'Preço De': Preço original do produto (antes de desconto)
             - 'Preço Por': Preço atual do produto (após desconto)
     """
-    arquivo_json = input('Digite o caminho do seu arquivo da Bagy: ').strip('\'"')
+    print('Selecione o arquivo JSON da bagy')
+    janela = Tk()
+    arquivo = tkinter.filedialog.askopenfilename(title='Selecione o arquivo JSON da bagy')
+    janela.destroy()
+    arquivo_json = arquivo
     bagy_json = pd.read_json(arquivo_json)
     bagy_json = bagy_json[['Brands → Name', 'Variations → Sku', 'Price', 'Price Compare', 'Name', 'Stocks → Balance', 'External ID']]
     bagy_json = bagy_json.rename(columns={'Brands → Name': 'Marca', 'Variations → Sku': 'Código', 'Price Compare': 'Preço De', 'Price': 'Preço Por', 'Name': 'Nome', 'Stocks → Balance': 'Estoque', 'External ID': 'SKU Pai'})
@@ -46,7 +54,11 @@ def base_dafiti():
             - 'Preço De': Preço original do produto (antes de desconto)
             - 'Preço Por': Preço atual do produto (após desconto)
     """
-    arquivo_dafiti = input('Digite o caminho do seu arquivo da Dafiti: ').strip('\'"')
+    print('Selecione o arquivo da Dafiti')
+    janela = Tk()
+    arquivo = tkinter.filedialog.askopenfilename(title='Selecione o arquivo da Dafiti')
+    janela.destroy()
+    arquivo_dafiti = arquivo
     dafiti_csv = pd.read_csv(arquivo_dafiti, delimiter=';')
     dafiti_df = pd.DataFrame(dafiti_csv)
     colunas_para_remover = ['CatalogProductId', 'Dafiti SKU', 'Ncm', 'Brand', 'Color',
@@ -67,7 +79,11 @@ def base_dafiti():
     return dafiti_df
 
 def base_meli():
-    arquivo_meli = input('Digite o caminho do arquivo do Mercado Livre: ').strip('\'"')
+    print('Selecione o arquivo do Mercado livre:')
+    janela = Tk()
+    arquivo = tkinter.filedialog.askopenfilename(title='Selecione o arquivo do Mercado livre')
+    janela.destroy()
+    arquivo_meli = arquivo
     df_meli = pd.read_excel(arquivo_meli, sheet_name='Anúncios')
     df_meli = df_meli.drop([0, 1])
     df_meli.reset_index(drop=True, inplace=True)
@@ -94,7 +110,11 @@ def base_meli():
     return df_meli
 
 def base_zattini():
-    arquivo_zattini = input('Digite o caminho do seu arquivo da zattini: ').strip('\'"')
+    print('Selecione o arquivo da Zattini:')
+    janela = Tk()
+    arquivo = tkinter.filedialog.askopenfilename(title='Selecione o arquivo da Zattini')
+    janela.destroy()
+    arquivo_zattini = arquivo
     zattini_excel = pd.read_excel(arquivo_zattini)
     zattini_df = pd.DataFrame(zattini_excel)
     zattini_df = zattini_df.rename(columns={'Sku Seller': 'Código'})
@@ -142,19 +162,22 @@ def exportar_para_dafiti(bagy, marketplace):
     df_exportar_dafiti.loc[df_exportar_dafiti['Código'].isin(marketplace['Código']), 'Status Cadastro'] = 'Cadastrado'
     df_exportar_dafiti = df_exportar_dafiti.merge(marketplace, on='Código', how='left')
     df_exportar_dafiti = df_exportar_dafiti.drop(['Nome_y', 'Estoque_y', 'Código'], axis=1)
-    df_exportar_dafiti = df_exportar_dafiti.rename(columns={'Nome_x': 'Nome', 'Estoque_x': 'Estoque','Preço De_y': 'Preço De Dft', 'Preço Por_y': 'Preço Por Dft', 'Preço De_x': 'Preço De Bagy', 'Preço Por_x': 'Preço Por Bagy' })
+    df_exportar_dafiti = df_exportar_dafiti.rename(columns={'Nome_x': 'Nome', 'Estoque_x': 'Estoque','Preço De_y': 'Preço De Dft', 'Preço Por_y': 'Preço Por Dft', 'Preço De_x': 'Preço De Bagy', 'Preço Por_x': 'Preço Pix Bagy' })
     df_dafiti_final = df_exportar_dafiti.groupby('SKU Pai').agg({
         'Marca': 'first',
         'Nome': 'first',
         'Estoque': 'sum',
         'Preço De Bagy': 'first',
-        'Preço Por Bagy': 'first',
+        'Preço Pix Bagy': 'first',
         'Status Cadastro': 'first',
         'Preço De Dft': 'first',
         'Preço Por Dft': 'first'
     }).reset_index()
+    df_dafiti_final['Preço Por Bagy'] = df_dafiti_final['Preço Pix Bagy'].apply(lambda x: np.ceil(x / 10) * 10 - 0.01)
     df_dafiti_final = df_dafiti_final.sort_values(by='Estoque', ascending=False)
     df_dafiti_final = df_dafiti_final.dropna(subset=['Marca'])
+    colunas = ['Marca','SKU Pai', 'Nome', 'Estoque', 'Preço De Bagy', 'Preço Pix Bagy', 'Preço Por Bagy', 'Preço De Dft', 'Preço Por Dft', 'Status Cadastro']
+    df_dafiti_final = df_dafiti_final[colunas]
     return df_dafiti_final
 
 def exportar_meli(bagy, marketplace):
@@ -162,8 +185,8 @@ def exportar_meli(bagy, marketplace):
     df_exportar_meli = bagy[~bagy['Marca'].isin(marcas_proibidas_meli)]
     df_exportar_meli.loc[:, 'Status Cadastro'] = 'Cadastrado'
     df_exportar_meli = df_exportar_meli.merge(marketplace, on='Código', how='left')
-    df_exportar_meli = df_exportar_meli.drop(['Marca'], axis=1)
     df_exportar_meli = df_exportar_meli.groupby('SKU Pai').agg({
+        'Marca': 'first',
         'Nome': 'first',
         'Estoque': 'sum',
         'Preço De': 'first',
@@ -174,7 +197,10 @@ def exportar_meli(bagy, marketplace):
     df_exportar_meli = df_exportar_meli.sort_values(by='Estoque', ascending=False)
     df_exportar_meli.loc[df_exportar_meli['Preço Por Meli'].isna(), 'Status Cadastro'] = 'Sem Cadastro'
     df_exportar_meli.drop([6362, 5007], inplace=True)
-   
+    df_exportar_meli = df_exportar_meli.rename(columns={'Preço Por': 'Preço Pix'})
+    df_exportar_meli['Preço Por'] = df_exportar_meli['Preço Pix'].apply(lambda x: np.ceil(x / 10) * 10 - 0.01)
+    colunas = ['Marca','SKU Pai', 'Nome', 'Estoque', 'Preço De', 'Preço Pix', 'Preço Por', 'Preço Por Meli', 'Status Cadastro']
+    df_exportar_meli = df_exportar_meli[colunas]
     return df_exportar_meli
 
 def exportar_zattini(bagy, marketplace):
@@ -204,23 +230,31 @@ def exportar_zattini(bagy, marketplace):
     df_exportar_zattini.loc[:, 'Status Cadastro'] = 'Sem Cadastro'
     df_exportar_zattini.loc[df_exportar_zattini['Código'].isin(marketplace['Código']), 'Status Cadastro'] = 'Cadastrado'
     df_exportar_zattini = df_exportar_zattini.merge(marketplace, on='Código', how='left')
-    df_exportar_zattini = df_exportar_zattini.drop(columns=['Código', 'Marca'])
-    df_exportar_zattini = df_exportar_zattini.rename(columns= {'Preço De_x': 'Preço De Bagy', 'Preço Por_x': 'Preço Por Bagy', 'Preço De_y': 'Preço De Ztn', 'Preço Por_y': 'Preço Por Ztn' })
+    df_exportar_zattini = df_exportar_zattini.drop(columns=['Código'])
+    df_exportar_zattini = df_exportar_zattini.rename(columns= {'Preço De_x': 'Preço De Bagy', 'Preço Por_x': 'Preço Pix Bagy', 'Preço De_y': 'Preço De Ztn', 'Preço Por_y': 'Preço Por Ztn' })
     df_exportar_zattini = df_exportar_zattini.groupby('SKU Pai').agg({
+        'Marca': 'first',
         'Nome': 'first',
         'Estoque': 'sum',
         'Preço De Bagy': 'first',
-        'Preço Por Bagy': 'first',
+        'Preço Pix Bagy': 'first',
         'Status Cadastro': 'first',
         'Preço De Ztn': 'first',
         'Preço Por Ztn': 'first'
     }).reset_index()
     df_exportar_zattini = df_exportar_zattini.sort_values(by='Estoque', ascending=False)
     df_exportar_zattini.drop([4604, 3555], inplace=True) #removendo sacola plastica e embalagem de presente
+    df_exportar_zattini['Preço Por Bagy'] = df_exportar_zattini['Preço Pix Bagy'].apply(lambda x: np.ceil(x / 10) * 10 - 0.01)
+    colunas = ['Marca','SKU Pai', 'Nome', 'Estoque', 'Preço De Bagy', 'Preço Pix Bagy', 'Preço Por Bagy', 'Preço De Ztn', 'Preço Por Ztn', 'Status Cadastro']
+    df_exportar_zattini = df_exportar_zattini[colunas]
     return df_exportar_zattini
 
 def salvar_arquivo(tabela, nome_arquivo):
-    local = input(f'Onde deseja salvar o arquivo {nome_arquivo}? ').strip('\'"')
+    print(f'Onde deseja salvar o {nome_arquivo}?')
+    janela = Tk()
+    caminho = tkinter.filedialog.askdirectory(title='Selecione onde salvar o aquivo')
+    janela.destroy()
+    local = caminho
     local = os.path.abspath(local)  # Converte para um caminho absoluto, se necessário
     if not os.path.exists(local):
         os.makedirs(local)  # Cria o diretório, se não existir
